@@ -11,11 +11,19 @@ cookies = [
     }
 ]
 
+videos:dict = {}
+
 def handle_response(response):
 	if "recommend/item_list" in response.url:
 		json_response = response.json()
 		if("itemList" in json_response):
-			print("Resposta da API:", response.json()["itemList"][0]["desc"])
+			videoList = json_response["itemList"]
+			for video in videoList:
+				videos[video["id"]] = video
+
+
+def extract_video_id(url):
+    return url.split('/')[-1]
 
 if __name__ == "__main__":
 	browser = playwright_config().launch(headless=False)
@@ -28,7 +36,17 @@ if __name__ == "__main__":
 		page.wait_for_timeout(2000)
 		page.on("response", handle_response)
 		page.goto("https://tiktok.com/foryou")
-		page.wait_for_timeout(10000)
+
+		page.click(".tiktok-web-player")
+		page.wait_for_timeout(20000)
+
+		video_url = page.url
+		video_id = extract_video_id(video_url)
+
+		video_data = videos[video_id]
+		print("ID do Vídeo:", video_id)
+
+		print("Descrição do Vídeo:", video_data["desc"])
     
 		browser.close()
 		
