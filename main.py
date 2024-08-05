@@ -1,37 +1,37 @@
 from playwright_config import playwright_config
 
+cookies = [
+    {
+        'name': 'sessionid',
+        'value': 'a4953df344fba92a7717508eeb04ae89',
+        'domain': '.tiktok.com',
+        'path': '/',
+        'httpOnly': False,
+        'secure': True
+    }
+]
+
+def handle_response(response):
+	if "recommend/item_list" in response.url:
+		json_response = response.json()
+		if("itemList" in json_response):
+			print("Resposta da API:", response.json()["itemList"][0]["desc"])
+
 if __name__ == "__main__":
-  ms_token_value = "TeSs7SDkNrm_kq35QSb_8JdLt_OiRC5yhxA0cHmr5m_EjgxvM2TZ7Ibi4UZbIM0A2UdltCHsRj4iPD7eJsJ0Y_f99D_32uJE8ht3w8arJHKnpXJzrJJoI99pospheb8w2BgnD-y6Ured4g=="
-
-  browser = playwright_config().launch(headless=False)
-  context = browser.new_context()
-  context.add_cookies([{
-    'name': 'msToken',
-    'value': ms_token_value,
-    'domain': '.tiktok.com',
-    'path': '/',
-    'httpOnly': False,
-    'secure': True
-  }, {
-    'name': 'msToken',
-    'value': ms_token_value,
-    'domain': 'www.tiktok.com',
-    'path': '/',
-    'httpOnly': False,
-    'secure': False
-  }
-])
-  
-  page = context.new_page()
-
-  def handle_response(response):
-    print(response)
-    if "recommend/item_list" in response.url:
-        print("Resposta da API:", response.json())
-
-
-  page.on("response", handle_response)
-  page.goto("https://tiktok.com")
-
-  page.wait_for_timeout(5000)
-  browser.close()
+	browser = playwright_config().launch(headless=False)
+	try:
+		context = browser.new_context()
+		page = context.new_page()
+		page.goto("https://tiktok.com")
+		page.wait_for_timeout(2000)
+		context.add_cookies(cookies)
+		page.wait_for_timeout(2000)
+		page.on("response", handle_response)
+		page.goto("https://tiktok.com/foryou")
+		page.wait_for_timeout(10000)
+    
+		browser.close()
+		
+	except Exception as e:
+		print(e)
+		browser.close()
