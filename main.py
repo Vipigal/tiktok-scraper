@@ -1,6 +1,7 @@
 from playwright_config import playwright_config
 import asyncio
 from db_connect import db_connect
+from db_config import load_config
 
 def extract_video_id(url):
     return url.split('/')[-1]
@@ -15,9 +16,10 @@ def get_video_hashtags(video_data):
 	return hashtags
 
 async def main():
-	# db = db_connect()
-	# cursor = db.cursor()
-	# cursor.execute("SELECT * FROM tiktok")
+	config = load_config()
+	db = db_connect(config)
+	cursor = db.cursor()
+	cursor.execute("CREATE TABLE IF NOT EXISTS TIKTOK_VIDEOS (ID SERIAL PRIMARY KEY, VIDEO_ID VARCHAR(255), DESCRIPTION TEXT, HASHTAGS TEXT)")
 	cookies = [
 		{
 			'name': 'sessionid',
@@ -43,11 +45,11 @@ async def main():
 	try:
 		context = await browser.new_context()
 		page = await context.new_page()
+		page.on("response", lambda response: asyncio.create_task(handle_response(response)))
 		await page.goto("https://tiktok.com")
 		await page.wait_for_timeout(2000)
 		await context.add_cookies(cookies)
 		await page.wait_for_timeout(2000)
-		page.on("response", lambda response: asyncio.create_task(handle_response(response)))
 		await page.goto("https://tiktok.com/foryou")
 		await page.wait_for_timeout(2000)
 
@@ -64,6 +66,7 @@ async def main():
 			if(video_id in videos):
 				video_data = videos[video_id]
 				if("desc" in video_data and video_data["desc"] != ""):
+					cursor.execute("INSERT INTO TIKTOK_VIDEOS (VIDEO_ID, DESCRIPTION, HASHTAGS) VALUES (%s, %s, %s)", (video_id, video_data["desc"], " ".join(get_video_hashtags(video_data))))
 					print("[DATA] Descrição do Vídeo:", video_data["desc"]) #analisar se descrição encaixa no tema escolhido aqui
 
 				hashtags = get_video_hashtags(video_data)

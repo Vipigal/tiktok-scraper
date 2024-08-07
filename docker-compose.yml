@@ -1,0 +1,19 @@
+services: 
+  db:
+    image: postgres:13
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: tiktok
+    ports:
+      - "5432:5432"
+    networks:
+      - tiktok-crawler-network
+    restart: 'always'
+
+networks:
+    tiktok-crawler-network:
+        driver: bridge
+ 
