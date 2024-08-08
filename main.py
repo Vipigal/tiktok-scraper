@@ -2,6 +2,8 @@ from playwright_config import playwright_config
 import asyncio
 from db_connect import db_connect
 from db_config import load_config
+import os
+from agents import classificar_conteudo
 
 def extract_video_id(url):
     return url.split('/')[-1]
@@ -16,10 +18,10 @@ def get_video_hashtags(video_data):
 	return hashtags
 
 async def main():
-	config = load_config()
-	db = db_connect(config)
-	cursor = db.cursor()
-	cursor.execute("CREATE TABLE IF NOT EXISTS TIKTOK_VIDEOS (ID SERIAL PRIMARY KEY, VIDEO_ID VARCHAR(255), DESCRIPTION TEXT, HASHTAGS TEXT)")
+	# config = load_config()
+	# db = db_connect(config)
+	# cursor = db.cursor()
+	# cursor.execute("CREATE TABLE IF NOT EXISTS TIKTOK_VIDEOS (ID SERIAL PRIMARY KEY, VIDEO_ID VARCHAR(255), DESCRIPTION TEXT, HASHTAGS TEXT)")
 	cookies = [
 		{
 			'name': 'sessionid',
@@ -45,12 +47,12 @@ async def main():
 	try:
 		context = await browser.new_context()
 		page = await context.new_page()
-		page.on("response", lambda response: asyncio.create_task(handle_response(response)))
 		await page.goto("https://tiktok.com")
 		await page.wait_for_timeout(2000)
 		await context.add_cookies(cookies)
 		await page.wait_for_timeout(2000)
 		await page.goto("https://tiktok.com/foryou")
+		page.on("response", lambda response: asyncio.create_task(handle_response(response)))
 		await page.wait_for_timeout(2000)
 
 		await page.click(".tiktok-web-player")
@@ -66,12 +68,15 @@ async def main():
 			if(video_id in videos):
 				video_data = videos[video_id]
 				if("desc" in video_data and video_data["desc"] != ""):
-					cursor.execute("INSERT INTO TIKTOK_VIDEOS (VIDEO_ID, DESCRIPTION, HASHTAGS) VALUES (%s, %s, %s)", (video_id, video_data["desc"], " ".join(get_video_hashtags(video_data))))
+					# cursor.execute("INSERT INTO TIKTOK_VIDEOS (VIDEO_ID, DESCRIPTION, HASHTAGS) VALUES (%s, %s, %s)", (video_id, video_data["desc"], " ".join(get_video_hashtags(video_data))))
 					print("[DATA] Descrição do Vídeo:", video_data["desc"]) #analisar se descrição encaixa no tema escolhido aqui
 
 				hashtags = get_video_hashtags(video_data)
 				if len(hashtags) > 0:
 					print("[DATA] Hashtags do Vídeo:", " ".join(hashtags)) #analisar se hashtags encaixam no tema escolhido aqui
+					
+				classificacao = classificar_conteudo(video_data["desc"], hashtags)
+				print(classificacao)
 
 			print("[INFO] Assistindo ao vídeo (20 segundos)...")
 			await page.wait_for_timeout(20000)
@@ -88,8 +93,12 @@ async def main():
 
 
 if __name__ == "__main__":
-	try:
-		asyncio.run(main())
-	except Exception as e:
-		print("[ERRO]", e)
-		exit(1)
+  os.environ["OPENAI_API_KEY"] = "NA"
+  os.environ['OPENAI_API_BASE']='http://localhost:11434'
+  os.environ['OPENAI_MODEL_NAME']='llama2'
+  os.environ['OPENAI_API_KEY']=''
+  try:
+    asyncio.run(main())
+  except Exception as e:
+    print("[ERRO]", e)
+    exit(1)

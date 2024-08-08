@@ -13,6 +13,25 @@ services:
       - tiktok-crawler-network
     restart: 'always'
 
+  # llama:
+  #   image: ollama/ollama:latest
+  #   volumes:
+  #     - .ollama:/root/.ollama
+  #     - ./init-ollama.sh:/usr/local/bin/init-ollama.sh
+  #   entrypoint: ["/bin/bash", "-c", "/usr/local/bin/init-ollama.sh"]
+  #   ports:
+  #     - 11434:11434
+  #   networks:
+  #     - tiktok-crawler-network
+  #   restart: 'always'
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: 1
+  #             capabilities: [gpu]
+
 networks:
     tiktok-crawler-network:
         driver: bridge
