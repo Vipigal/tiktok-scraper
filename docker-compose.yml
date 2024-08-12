@@ -1,14 +1,15 @@
 services: 
   db:
-    image: postgres:13
+    image: mysql:latest
     volumes:
-      - ./postgres-data:/var/lib/postgresql/data
+      -  ./mysql-data:/var/lib/mysql
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: tiktok
+      MYSQL_USER: 'root'
+      MYSQL_PASS: 'root'
+      MYSQL_ROOT_PASSWORD: 'root'
+      MYSQL_DB: 'tiktok'
     ports:
-      - "5432:5432"
+      - "3306:3306"
     networks:
       - tiktok-crawler-network
     restart: 'always'
