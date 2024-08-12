@@ -4,10 +4,10 @@ services:
     volumes:
       -  ./mysql-data:/var/lib/mysql
     environment:
-      MYSQL_USER: 'root'
-      MYSQL_PASS: 'root'
-      MYSQL_ROOT_PASSWORD: 'root'
-      MYSQL_DB: 'tiktok'
+      MYSQL_USER: 'crawler'
+      MYSQL_PASSWORD: 'password'
+      MYSQL_ROOT_PASSWORD: 'password'
+      MYSQL_DATABASE: 'tiktok'
     ports:
       - "3306:3306"
     networks:
