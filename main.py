@@ -42,6 +42,16 @@ def get_video_hashtags(video_data):
     return hashtags
 
 
+def get_video_stickerText(video_data):
+    stickerTexts = []
+    if "stickersOnItem" not in video_data:
+        return stickerTexts
+
+    for stickerText in video_data["stickersOnItem"]:
+        stickerTexts.append(stickerText["stickerText"][0])
+    return stickerTexts
+
+
 async def main():
     account_name = "vinicius"
     try:
@@ -110,11 +120,15 @@ async def main():
             video_id = extract_video_id(video_url)
             if video_id in videos:
                 video_data = videos[video_id]
+                description = None
+
                 if "isAd" in video_data and video_data["isAd"] == True:
                     print("[INFO] Video é um anúncio. Pulando...")
                     await page.click("[data-e2e='arrow-right']")
                     continue
+
                 if "desc" in video_data and video_data["desc"] != "":
+                    description = video_data["desc"]
                     print("[DATA] Descrição do Vídeo:", video_data["desc"])
 
                 hashtags = get_video_hashtags(video_data)
@@ -122,10 +136,30 @@ async def main():
                 if len(hashtags) > 0:
                     print("[DATA] Hashtags do Vídeo:", " ".join(hashtags))
 
-                classificacao = await classificar_conteudo(video_data["desc"], hashtags)
+                stickerTexts = get_video_stickerText(video_data)
+                stickerTexts_string = " ".join(
+                    f"{stickerText}" for stickerText in stickerTexts
+                )
+                if len(stickerTexts) > 0:
+                    print("[DATA] StickerTexts do Vídeo:", stickerTexts_string)
+
+                if (
+                    (description is None or description == "")
+                    and len(hashtags) == 0
+                    and len(stickerTexts) == 0
+                ):
+                    print(
+                        "[INFO] Video não possui conteudo a ser analisado. Pulando..."
+                    )
+                    await page.click("[data-e2e='arrow-right']")
+                    continue
+
+                classificacao = await classificar_conteudo(
+                    description, hashtags, stickerTexts_string
+                )
                 liked = False
                 print(classificacao)
-                if classificacao == "echo-chamber." or classificacao == "echo-chamber":
+                if "True" in str(classificacao) or "true" in str(classificacao):
                     # like video
                     like_span = page.locator("[data-e2e='browse-like-icon']").first
                     await like_span.wait_for(state="visible")

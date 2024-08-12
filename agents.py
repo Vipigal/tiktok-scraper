@@ -12,7 +12,7 @@ llm = ChatOllama(model="llama3.1", base_url="http://localhost:11434")
 # Configuração do agente para classificação
 agente_classificacao = Agent(
     role="Classificador de Echo Chamber",
-    goal="""Identificar se o conteúdo fornecido, que é a combinacao de descricao e hashtags de um TikTok, faz parte de uma echo chamber. Considere se o topico do assunto é geralmente polarizador, como discussões sobre política, religião, vacinas, ou outras questões sociais.""",
+    goal="""Identificar se o conteúdo fornecido, que é a combinacao de descricao e hashtags de um TikTok, faz parte de uma echo chamber. Considere se o topico do assunto é geralmente polarizador, como discussões sobre política, religião, vacinas, ou outras questões sociais. Retorne apenas True se o conteúdo for classificado como echo chamber, e False caso contrário. Nao elabore ou justifique seu raciocínio no output, apenas classifique o conteúdo.""",
     backstory="""Você é um especialista em identificar conteúdo brasileiro da rede social TikTok pertence a uma echo chamber ou nao.
     Você sabe que uma echo chamber é uma descrição metafórica de uma situação em que informações, ideias ou crenças são amplificadas ou reforçadas pela comunicação e repetição dentro de um sistema definido. Dentro de uma echo chamber, as fontes dominantes muitas vezes são inquestionáveis e opiniões diferentes ou concorrentes são censuradas ou desautorizadas. A maioria dos ambientes de echo chambers dependem de doutrinação e propaganda, a fim de disseminar informação, sutil ou não, de modo a atrapalhar os que estão presos na chamber e a evitar que tenham habilidades de pensamento cético necessárias para desacreditar a desinformação óbvia.
     Você tambem sabe que uma echo chamber geralmente tem como assunto um conteudo polarizador que divide opinioes e pode causar discussoes calorosas.""",
@@ -21,14 +21,21 @@ agente_classificacao = Agent(
 )
 
 
-async def classificar_conteudo(descricao, hashtags):
+async def classificar_conteudo(descricao, hashtags, stickerTexts_string):
     # Concatena a descrição e as hashtags em um único texto
-    texto = descricao + " " + " ".join(f"#{tag}" for tag in hashtags)
+    descricao = descricao or ""
+    texto = (
+        descricao
+        + " "
+        + " ".join(f"#{tag}" for tag in hashtags)
+        + " "
+        + stickerTexts_string
+    )
     # Cria uma tarefa de classificação
     tarefa = Task(
         description=f"""Classifique o seguinte conteúdo: "{texto}". Ele pertence a uma echo chamber, considerando os critérios descritos?""",
         agent=agente_classificacao,
-        expected_output="Uma string unica que pode ser echo-chamber ou nao-echo-chamber. Nao elabore nenhum tipo de resposta, apenas classifique o conteudo.",
+        expected_output="Uma string unica = True caso o conteudo seja classificado como echo-chamber ou uma string unica = False caso o conteudo nao seja classificado como echo chamber. Nao elabore ou justifique seu raciocínio no output, apenas classifique o conteúdo.",
     )
 
     # Configura o CrewAI com o agente e a tarefa
