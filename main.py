@@ -58,7 +58,7 @@ async def main():
         cookies = [
             {
                 "name": "sessionid",
-                "value": "a4953df344fba92a7717508eeb04ae89",
+                "value": "a4953df344fba92a7717508eeb04ae89",  # TROCAR PARA SESSION ID DO BOT
                 "domain": ".tiktok.com",
                 "path": "/",
                 "httpOnly": False,
